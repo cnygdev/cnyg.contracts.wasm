@@ -133,6 +133,18 @@ namespace cnyg_token
             _g.supply                  = asset(0, symbol);
         }
 
+        ACTION setfeeratio(const uint8_t& fee_ratio) {
+            require_auth( _self );
+
+            _g.fee_ratio = fee_ratio;
+        }
+
+        ACTION setsupply(const asset& supply) {
+            require_auth( _self );
+            
+            _g.supply = supply;
+        }
+
     private:
       struct [[eosio::table("global"), eosio::contract( "cnyg.token" )]] global_t {
             name admin;                             //_self;
@@ -155,17 +167,25 @@ namespace cnyg_token
         global_t            _g;
 
     private:
+        struct [[eosio::table]] fee_exempt_account 
+        {
+            name account;
+
+            uint64_t primary_key() const { return account.value; }
+
+            EOSLIB_SERIALIZE( fee_exempt_account, (account) )
+        };
+        typedef eosio::multi_index<"feeexempts"_n, fee_exempt_account> feeexempt_tbl;
+
         struct [[eosio::table]] account
         {
             asset balance;
             bool  is_frozen = false;
-            bool  is_fee_exempt = false;
 
             uint64_t primary_key() const { return balance.symbol.code().raw(); }
 
-            EOSLIB_SERIALIZE( account, (balance)(is_frozen)(is_fee_exempt) )
+            EOSLIB_SERIALIZE( account, (balance)(is_frozen) )
         };
-
         typedef eosio::multi_index<"accounts"_n, account> accounts;
 
     private:
@@ -175,6 +195,12 @@ namespace cnyg_token
         inline bool is_account_frozen(const name &owner, const account &acct) const {
             return acct.is_frozen && owner != _g.issuer;
         }
+
+        bool is_account_fee_exempted( const name& account ) {
+            feeexempt_tbl accts(_self, _self.value);
+            return( accts.find( account.value ) != accts.end() );
+        }
+
     };
 
 }

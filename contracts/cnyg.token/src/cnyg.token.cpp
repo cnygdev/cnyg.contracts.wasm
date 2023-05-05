@@ -73,15 +73,16 @@ namespace cnyg_token {
 
         asset actual_recv   = quantity;
         asset fee           = asset(0, quantity.symbol);
-        if (    _g.fee_collector.value != 0 &&  _g.fee_ratio > 0
-            &&  to != _g.issuer &&  to != _g.fee_collector 
-            &&  quantity.amount >= _g.fee_start_amount * pow(10,_g.supply.symbol.precision()))
+        if (   _g.fee_collector.value != 0 
+            && _g.fee_ratio > 0
+            && to != _g.issuer 
+            && to != _g.fee_collector 
+            && quantity.amount >= _g.fee_start_amount * pow(10,_g.supply.symbol.precision() ) )
         {
             accounts to_accts(get_self(), to.value);
             auto sym_code_raw = quantity.symbol.code().raw();
             auto to_acct = to_accts.find(sym_code_raw);
-            if ( to_acct == to_accts.end() || !to_acct->is_fee_exempt)
-            {
+            if ( to_acct == to_accts.end() || !is_account_fee_exempted( to )) { //new user or non-exempeted existing user
                 fee.amount =  std::min<int64_t>( _g.fee_max * pow(10,_g.supply.symbol.precision()) , (int64_t)mul64(quantity.amount, _g.fee_ratio, RATIO_BOOST) );
                 CHECK(fee < quantity, "the calculated fee must less than quantity");
                 actual_recv -= fee;
@@ -150,18 +151,24 @@ namespace cnyg_token {
     void xtoken::feeexempt(const name &account, bool is_fee_exempt) {
         require_auth(_g.issuer);
         
-        auto sym_code_raw = _g.supply.symbol.code().raw();
+        feeexempt_tbl accts(_self, _self.value);
+        auto itr = accts.find( account.value );
+        if (is_fee_exempt) {
+            check( itr == accts.end(), "account already exempted for fees" );
+            accts.emplace(_self, [&](auto &a) {
+                a.account = account;
+            });
 
-        accounts accts(get_self(), account.value);
-        const auto &acct = accts.get(sym_code_raw, "account of token does not exist");
-
-        accts.modify(acct, _g.issuer, [&](auto &a) {
-             a.is_fee_exempt = is_fee_exempt;
-        });
+        } else {
+            check( itr != accts.end(), "account not in exempt list" );
+            accts.erase(itr);
+        }
     }
 
     void xtoken::pause(bool is_paused)
     {
+        require_auth( _g.admin );
+        
         _g.is_paused = is_paused;
     }
 
