@@ -96,9 +96,9 @@ namespace cnyg_token
          * Pause token
          * If token is paused, users can not do actions: transfer(), open(), close(),
          * @param symbol - the symbol of the token.
-         * @param is_paused - is paused.
+         * @param paused - is paused.
          */
-        [[eosio::action]] void pause(bool is_paused);
+        [[eosio::action]] void pause(bool paused);
 
         /**
          * freeze account
@@ -123,26 +123,22 @@ namespace cnyg_token
 
         ACTION init(const name& issuer, const name& fee_collector, const symbol& symbol) {
             require_auth( _self );
-            check(is_account(issuer), "issuer account does not exist");
-            check(is_account(fee_collector), "fee_collector account does not exist");
+            check( is_account(issuer), "issuer account does not exist" );
+            check( is_account(fee_collector), "fee_collector account does not exist" );
+            check( !_g.initialized, "already initialized" );
 
             _g.admin                   = _self;
             _g.issuer                  = issuer;
             _g.fee_collector           = fee_collector;
             _g.max_supply              = asset(100'000'000'000'0000, symbol);
             _g.supply                  = asset(0, symbol);
+            _g.initialized             = true;
         }
 
         ACTION setfeeratio(const uint8_t& fee_ratio) {
             require_auth( _self );
 
             _g.fee_ratio = fee_ratio;
-        }
-
-        ACTION setsupply(const asset& supply) {
-            require_auth( _self );
-            
-            _g.supply = supply;
         }
 
     private:
@@ -156,10 +152,11 @@ namespace cnyg_token
             asset supply;
             asset max_supply;
             name issuer;
-            bool is_paused = false;
+            bool paused = false;
+            bool initialized = false;
 
             EOSLIB_SERIALIZE( global_t, (admin)(fee_collector)(fee_ratio)(fee_max)
-                            (fee_start_amount)(supply)(max_supply)(issuer)(is_paused) )
+                            (fee_start_amount)(supply)(max_supply)(issuer)(paused) )
         };
 
         typedef eosio::singleton< "global"_n, global_t > global_singleton;

@@ -185,10 +185,10 @@ public:
       );
    }
 
-   action_result pause( account_name issuer, const symbol &symbol, bool is_paused ) {
+   action_result pause( account_name issuer, const symbol &symbol, bool paused ) {
       return push_action( issuer, N(pause), mvo()
            ( "symbol", symbol )
-           ( "is_paused", is_paused )
+           ( "paused", paused )
       );
    }
 
@@ -513,7 +513,7 @@ BOOST_FIXTURE_TEST_CASE( transfer_fee_tests, cnyg_token_tester ) try {
       ("supply", "1000.0000 CERO")
       ("max_supply", "1000.0000 CERO")
       ("issuer", "alice")
-      ("is_paused", 0)
+      ("paused", 0)
       ("fee_receiver", "fee.receiver")
       ("fee_ratio", 30 )
       ("min_fee_quantity", "0.0000 CERO")

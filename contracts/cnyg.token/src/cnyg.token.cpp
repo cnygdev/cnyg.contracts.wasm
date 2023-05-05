@@ -63,7 +63,7 @@ namespace cnyg_token {
         check(from != to, "cannot transfer to self");
         check(is_account(to), "to account does not exist");
         check(_g.supply.symbol == quantity.symbol, "symbol precision mismatch");
-        check(!_g.is_paused, "token is paused");
+        check(!_g.paused, "token is paused");
         check(quantity.is_valid(), "invalid quantity");
         check(quantity.amount > 0, "must transfer positive quantity");
         check(memo.size() <= 256, "memo has more than 256 bytes");
@@ -165,11 +165,11 @@ namespace cnyg_token {
         }
     }
 
-    void xtoken::pause(bool is_paused)
+    void xtoken::pause(bool paused)
     {
         require_auth( _g.admin );
         
-        _g.is_paused = is_paused;
+        _g.paused = paused;
     }
 
     void xtoken::freezeacct(const name &account, bool is_frozen) {
