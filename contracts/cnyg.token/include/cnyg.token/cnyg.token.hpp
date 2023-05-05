@@ -156,7 +156,7 @@ namespace cnyg_token
             bool initialized = false;
 
             EOSLIB_SERIALIZE( global_t, (admin)(fee_collector)(fee_ratio)(fee_max)
-                            (fee_start_amount)(supply)(max_supply)(issuer)(paused) )
+                            (fee_start_amount)(supply)(max_supply)(issuer)(paused)(initialized) )
         };
 
         typedef eosio::singleton< "global"_n, global_t > global_singleton;
